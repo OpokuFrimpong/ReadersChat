@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 ReadersChat - AI Document Q&A</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 ReadersChat</h2>
+                <p>AI Document Q&A</p>
+            </div>
+
+            <div class="upload-section">
+                <h3>📤 Upload Document</h3>
+                <input type="file" id="fileInput" accept=".txt" />
+                <button id="uploadBtn" onclick="uploadDocument()">Process Document</button>
+                <div id="uploadStatus"></div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="clearBtn" onclick="clearChat()">🗑️ Clear Chat History</button>
+                <hr>
+                <h4>About</h4>
+                <p>Upload a text document and ask questions about its content using AI.</p>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-content">
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-message" id="welcomeMessage">
+                    <h1>👈 Please upload a document to get started!</h1>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Ask a question about your document..." 
+                    onkeypress="handleKeyPress(event)"
+                    disabled
+                />
+                <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

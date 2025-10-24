@@ -2,7 +2,7 @@
 
 ReadersChat is an intelligent chatbot application that allows you to upload text documents and ask questions about their content using AI. Built with Streamlit and LangChain, it uses OpenAI's GPT models and RAG (Retrieval-Augmented Generation) to provide accurate, context-aware answers.
 
-![ReadersChat Interface](assets/screenshot.png)
+![ReadersChat Interface](assets/ReadersChat.png)
 
 ##  Features
 
@@ -49,7 +49,7 @@ streamlit run app.py
 
 The app will open in your browser at `http://localhost:8502`
 
-## 📖 Usage
+##  Usage
 
 1. **Upload a Document**
    - Click "Browse files" in the sidebar
@@ -65,7 +65,7 @@ The app will open in your browser at `http://localhost:8502`
    - The chatbot remembers your conversation
    - You can ask follow-up questions using pronouns like "it", "that", "he/she", etc.
 
-## 🏗️ Project Structure
+##  Project Structure
 
 ```
 ReadersChat/
@@ -86,26 +86,26 @@ ReadersChat/
 - **[FAISS](https://github.com/facebookresearch/faiss)**: Vector database for semantic search
 - **[Python-dotenv](https://github.com/theskumar/python-dotenv)**: Environment variable management
 
-## 🔐 Security Best Practices
+## Security Best Practices
 
 - API keys are stored in `.env` file (excluded from Git)
 - Never hardcode sensitive credentials in code
 - The `.gitignore` file prevents accidental exposure of secrets
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
+## License
 
 This project is open source and available under the MIT License.
 
-## 👤 Author
+## Author
 
 **Opoku Frimpong**
 - GitHub: [@OpokuFrimpong](https://github.com/OpokuFrimpong)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - OpenAI for providing the GPT models
 - OpenAI APi 
@@ -114,4 +114,4 @@ This project is open source and available under the MIT License.
 
 ---
 
-⭐ If you find this project useful, please consider giving it a star!
+ If you find this project useful, please consider giving it a star!
