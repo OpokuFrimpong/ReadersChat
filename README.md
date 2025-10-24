@@ -2,6 +2,8 @@
 
 ReadersChat is an intelligent chatbot application that allows you to upload text documents and ask questions about their content using AI. Built with Streamlit and LangChain, it uses OpenAI's GPT models and RAG (Retrieval-Augmented Generation) to provide accurate, context-aware answers.
 
+![ReadersChat Interface](assets/screenshot.png)
+
 ## ✨ Features
 
 - **Document Upload**: Upload any `.txt` file to analyze
@@ -10,7 +12,7 @@ ReadersChat is an intelligent chatbot application that allows you to upload text
 - **Source Citations**: View relevant document excerpts that support each answer
 - **Clean Interface**: Simple, intuitive Streamlit-based UI
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -37,7 +39,7 @@ ReadersChat is an intelligent chatbot application that allows you to upload text
    OPENAI_API_KEY=your-openai-api-key-here
    ```
    
-   ⚠️ **Important**: Never commit your `.env` file to GitHub!
+   **Important**: Never commit your `.env` file to GitHub!
 
 ### Running the Application
 
@@ -47,7 +49,7 @@ streamlit run app.py
 
 The app will open in your browser at `http://localhost:8502`
 
-## 📖 Usage
+## Usage
 
 1. **Upload a Document**
    - Click "Browse files" in the sidebar
@@ -63,7 +65,7 @@ The app will open in your browser at `http://localhost:8502`
    - The chatbot remembers your conversation
    - You can ask follow-up questions using pronouns like "it", "that", "he/she", etc.
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 ReadersChat/
@@ -76,7 +78,7 @@ ReadersChat/
 └── knowledge_base.txt          # Sample knowledge base
 ```
 
-## 🔧 Technology Stack
+##  Technology Stack
 
 - **[Streamlit](https://streamlit.io/)**: Web application framework
 - **[LangChain](https://www.langchain.com/)**: LLM application framework
@@ -84,26 +86,23 @@ ReadersChat/
 - **[FAISS](https://github.com/facebookresearch/faiss)**: Vector database for semantic search
 - **[Python-dotenv](https://github.com/theskumar/python-dotenv)**: Environment variable management
 
-## 🔐 Security Best Practices
+## Security Best Practices
 
 - API keys are stored in `.env` file (excluded from Git)
 - Never hardcode sensitive credentials in code
 - The `.gitignore` file prevents accidental exposure of secrets
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
 
-This project is open source and available under the MIT License.
-
-## 👤 Author
+## Author
 
 **Opoku Frimpong**
 - GitHub: [@OpokuFrimpong](https://github.com/OpokuFrimpong)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - OpenAI for providing the GPT models
 - LangChain team for the excellent framework
@@ -111,4 +110,4 @@ This project is open source and available under the MIT License.
 
 ---
 
-⭐ If you find this project useful, please consider giving it a star!
+ If you find this project useful, please consider giving it a star!
