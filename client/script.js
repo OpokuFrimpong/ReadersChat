@@ -20,15 +20,15 @@ async function uploadDocument() {
     uploadBtn.textContent = 'Processing...';
 
     try {
-        const response = await fetch('http://localhost:3000/upload', {
+        const response = await fetch('/upload', {
             method: 'POST',
             body: formData
         });
 
         const data = await response.json();
 
-        if (data.success) {
-            showStatus(`✅ ${data.message}`, 'success');
+        if (response.ok) {
+            showStatus(` ${data.message}`, 'success');
             documentLoaded = true;
             messageInput.disabled = false;
             sendBtn.disabled = false;
@@ -36,10 +36,10 @@ async function uploadDocument() {
                 welcomeMessage.style.display = 'none';
             }
         } else {
-            showStatus(`❌ ${data.error}`, 'error');
+            showStatus(` ${data.detail || 'Error uploading file'}`, 'error');
         }
     } catch (error) {
-        showStatus(`❌ Error: ${error.message}`, 'error');
+        showStatus(` Error: ${error.message}`, 'error');
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Process Document';
@@ -60,12 +60,12 @@ async function sendMessage() {
     const loadingId = showLoading();
 
     try {
-        const response = await fetch('http://localhost:3000/chat', {
+        const response = await fetch('/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ question: message })
         });
 
         const data = await response.json();
@@ -73,10 +73,10 @@ async function sendMessage() {
         // Remove loading indicator
         removeLoading(loadingId);
 
-        if (data.answer) {
+        if (response.ok && data.answer) {
             addMessage(data.answer, 'assistant', data.sources);
         } else {
-            addMessage(`Error: ${data.error}`, 'assistant');
+            addMessage(`Error: ${data.detail || 'Unknown error'}`, 'assistant');
         }
     } catch (error) {
         removeLoading(loadingId);
@@ -109,7 +109,7 @@ function addMessage(text, role, sources = null) {
         sources.forEach((source, index) => {
             const sourceItem = document.createElement('div');
             sourceItem.className = 'source-item';
-            sourceItem.textContent = `Source ${index + 1}: ${source.content}`;
+            sourceItem.textContent = `Source ${index + 1}: ${source}`;
             sourcesDiv.appendChild(sourceItem);
         });
         
@@ -151,16 +151,38 @@ function removeLoading(loadingId) {
 }
 
 async function clearChat() {
+    const chatContainer = document.getElementById('chatContainer');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    
     try {
-        await fetch('http://localhost:3000/clear', {
-            method: 'POST'
+        await fetch('/history', {
+            method: 'DELETE'
         });
         
-        const chatContainer = document.getElementById('chatContainer');
+        // Clear chat display
         chatContainer.innerHTML = '';
-        showStatus('Chat history cleared', 'success');
+        
+        // Show welcome message
+        const welcome = document.createElement('div');
+        welcome.className = 'welcome-message';
+        welcome.id = 'welcomeMessage';
+        welcome.innerHTML = `
+            <div style="text-align: center;">
+                <h1>Chat history cleared!</h1>
+                <p style="color: #a0a0a0; margin-top: 1rem;">
+                    Ask another question to continue.
+                </p>
+            </div>
+        `;
+        chatContainer.appendChild(welcome);
     } catch (error) {
-        showStatus(`Error: ${error.message}`, 'error');
+        console.error('Error clearing chat:', error);
+    }
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
     }
 }
 
@@ -168,14 +190,5 @@ function showStatus(message, type) {
     const uploadStatus = document.getElementById('uploadStatus');
     uploadStatus.textContent = message;
     uploadStatus.className = type;
-    
-    setTimeout(() => {
-        uploadStatus.style.display = 'none';
-    }, 5000);
-}
-
-function handleKeyPress(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
+    uploadStatus.style.display = 'block';
 }

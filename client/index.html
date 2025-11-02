@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📚 ReadersChat - AI Document Q&A</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
@@ -25,8 +25,11 @@
             <div class="sidebar-footer">
                 <button id="clearBtn" onclick="clearChat()">🗑️ Clear Chat History</button>
                 <hr>
-                <h4>About</h4>
-                <p>Upload a text document and ask questions about its content using AI.</p>
+                <h4>ℹ️ About</h4>
+                <p>Upload a text document and ask questions about its content using AI powered by FastAPI and LangChain.</p>
+                <hr>
+                <h4>⚡ Tech Stack</h4>
+                <p style="font-size: 0.85rem;">FastAPI • LangChain • OpenAI GPT-4o • FAISS</p>
             </div>
         </aside>
 
@@ -34,7 +37,12 @@
         <main class="main-content">
             <div class="chat-container" id="chatContainer">
                 <div class="welcome-message" id="welcomeMessage">
-                    <h1>👈 Please upload a document to get started!</h1>
+                    <div style="text-align: center;">
+                        <h1>👈 Upload a document to get started!</h1>
+                        <p style="color: #a0a0a0; margin-top: 1rem;">
+                            Supports .txt files • AI-powered answers • Conversation memory
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -51,6 +59,6 @@
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

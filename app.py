@@ -18,7 +18,7 @@ load_dotenv()
 st.set_page_config(page_title="ReadersChat", page_icon="📚", layout="wide")
 
 # Title
-st.title("📚 ReadersChat - AI Document Q&A")
+st.title("ReadersChat - AI Document Q&A")
 st.markdown("Upload a document and start asking questions!")
 
 # Initialize session state
@@ -29,7 +29,7 @@ if 'chat_history' not in st.session_state:
 
 # Sidebar for document upload
 with st.sidebar:
-    st.header("📤 Upload Document")
+    st.header("Upload Document")
     uploaded_file = st.file_uploader("Choose a text file", type=['txt'])
     
     if uploaded_file is not None:
@@ -59,8 +59,8 @@ with st.sidebar:
                     # Set up retriever
                     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
                     
-                    # Create chat model
-                    llm = ChatOpenAI(model="gpt-4o", temperature=0)
+                    # Create chat model - using gpt-3.5-turbo (cheaper alternative)
+                    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
                     
                     # Create RAG prompt template with chat history
                     template = """You are a helpful AI assistant. Answer the question based on the following context and our conversation history.
@@ -93,11 +93,11 @@ Answer:"""
                     # Clean up temp file
                     os.unlink(tmp_file_path)
                     
-                    st.success("✅ Document processed successfully!")
+                    st.success(" Document processed successfully!")
                     st.session_state.chat_history = []
                     
                 except Exception as e:
-                    st.error(f"❌ Error processing document: {str(e)}")
+                    st.error(f" Error processing document: {str(e)}")
     
     st.markdown("---")
     st.markdown("### About")
@@ -159,7 +159,7 @@ else:
                     # Optional: Show source documents
                     if hasattr(st.session_state, 'retriever'):
                         docs = st.session_state.retriever.invoke(prompt)
-                        with st.expander("📄 View source excerpts"):
+                        with st.expander("View source excerpts"):
                             for i, doc in enumerate(docs, 1):
                                 st.markdown(f"**Source {i}:**")
                                 st.text(doc.page_content[:300] + "...")
@@ -170,6 +170,6 @@ else:
 
 # Clear chat button
 if st.session_state.chat_history:
-    if st.sidebar.button("🗑️ Clear Chat History"):
+    if st.sidebar.button("Clear Chat History"):
         st.session_state.chat_history = []
         st.rerun()
