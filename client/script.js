@@ -1,4 +1,100 @@
 let documentLoaded = false;
+let socket = null;
+let currentMessageId = null;
+let currentMessage = '';
+
+// Initialize WebSocket connection
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
+    
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+        console.log('✅ WebSocket connected');
+    };
+    
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'start') {
+            // Create new assistant message container
+            currentMessageId = 'msg-' + Date.now();
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.id = currentMessageId;
+            messageDiv.className = 'message assistant-message';
+            messageDiv.innerHTML = `
+                <div class="message-icon assistant-icon">AI</div>
+                <div class="message-content"></div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            currentMessage = '';
+        }
+        else if (data.type === 'token') {
+            // Append token to current message
+            currentMessage += data.content;
+            const messageDiv = document.getElementById(currentMessageId);
+            if (messageDiv) {
+                const contentDiv = messageDiv.querySelector('.message-content');
+                contentDiv.textContent = currentMessage;
+                
+                // Auto-scroll to bottom
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+        else if (data.type === 'end') {
+            // Message complete
+            console.log('✅ Message complete');
+        }
+        else if (data.type === 'sources') {
+            // Add sources to the message
+            const messageDiv = document.getElementById(currentMessageId);
+            if (messageDiv && data.sources && data.sources.length > 0) {
+                const contentDiv = messageDiv.querySelector('.message-content');
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'sources';
+                sourcesDiv.innerHTML = '<h4>Source Excerpts:</h4>';
+                
+                data.sources.forEach((source, index) => {
+                    const sourceItem = document.createElement('div');
+                    sourceItem.className = 'source-item';
+                    sourceItem.textContent = `Source ${index + 1}: ${source}`;
+                    sourcesDiv.appendChild(sourceItem);
+                });
+                
+                contentDiv.appendChild(sourcesDiv);
+            }
+            
+            // Reset current message
+            currentMessage = '';
+            currentMessageId = null;
+        }
+        else if (data.type === 'error') {
+            // Show error message
+            if (currentMessageId) {
+                const messageDiv = document.getElementById(currentMessageId);
+                if (messageDiv) {
+                    messageDiv.remove();
+                }
+            }
+            addMessage(`Error: ${data.content}`, 'assistant');
+            currentMessage = '';
+            currentMessageId = null;
+        }
+    };
+    
+    socket.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+        addMessage('Connection error. Please refresh the page.', 'assistant');
+    };
+    
+    socket.onclose = () => {
+        console.log('🔌 WebSocket closed');
+        socket = null;
+    };
+}
 
 async function uploadDocument() {
     const fileInput = document.getElementById('fileInput');
@@ -28,18 +124,23 @@ async function uploadDocument() {
         const data = await response.json();
 
         if (response.ok) {
-            showStatus(` ${data.message}`, 'success');
+            showStatus(`${data.message}`, 'success');
             documentLoaded = true;
             messageInput.disabled = false;
             sendBtn.disabled = false;
             if (welcomeMessage) {
                 welcomeMessage.style.display = 'none';
             }
+            
+            // Initialize WebSocket connection
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                connectWebSocket();
+            }
         } else {
-            showStatus(` ${data.detail || 'Error uploading file'}`, 'error');
+            showStatus(`${data.detail || 'Error uploading file'}`, 'error');
         }
     } catch (error) {
-        showStatus(` Error: ${error.message}`, 'error');
+        showStatus(`Error: ${error.message}`, 'error');
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Process Document';
@@ -56,31 +157,33 @@ async function sendMessage() {
     addMessage(message, 'user');
     messageInput.value = '';
 
-    // Show loading indicator
-    const loadingId = showLoading();
-
-    try {
-        const response = await fetch('/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ question: message })
+    // Ensure WebSocket is connected
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+        
+        // Wait for connection
+        await new Promise((resolve) => {
+            const checkConnection = setInterval(() => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    clearInterval(checkConnection);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkConnection);
+                addMessage('Failed to connect. Please refresh the page.', 'assistant');
+                resolve();
+            }, 5000);
         });
+    }
 
-        const data = await response.json();
-
-        // Remove loading indicator
-        removeLoading(loadingId);
-
-        if (response.ok && data.answer) {
-            addMessage(data.answer, 'assistant', data.sources);
-        } else {
-            addMessage(`Error: ${data.detail || 'Unknown error'}`, 'assistant');
-        }
-    } catch (error) {
-        removeLoading(loadingId);
-        addMessage(`Error: ${error.message}`, 'assistant');
+    // Send message via WebSocket
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ question: message }));
+    } else {
+        addMessage('Connection not ready. Please try again.', 'assistant');
     }
 }
 
@@ -91,7 +194,7 @@ function addMessage(text, role, sources = null) {
 
     const icon = document.createElement('div');
     icon.className = `message-icon ${role}-icon`;
-    icon.textContent = role === 'user' ? '👤' : '🤖';
+    icon.textContent = role === 'user' ? 'You' : 'AI';
 
     const content = document.createElement('div');
     content.className = 'message-content';
@@ -104,7 +207,7 @@ function addMessage(text, role, sources = null) {
     if (sources && sources.length > 0) {
         const sourcesDiv = document.createElement('div');
         sourcesDiv.className = 'sources';
-        sourcesDiv.innerHTML = '<h4>📄 Source Excerpts:</h4>';
+        sourcesDiv.innerHTML = '<h4>Source Excerpts:</h4>';
         
         sources.forEach((source, index) => {
             const sourceItem = document.createElement('div');

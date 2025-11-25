@@ -3,7 +3,7 @@ ReadersChat FastAPI Server
 A FastAPI-based document Q&A chatbot using LangChain and OpenAI
 """
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import shutil
 from dotenv import load_dotenv
+import asyncio
 
 # LangChain imports
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -214,6 +215,102 @@ async def clear_history():
     global chat_history
     chat_history = []
     return {"message": "History cleared"}
+
+
+@app.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket):
+    """WebSocket endpoint for streaming chat with smart context detection"""
+    await websocket.accept()
+    
+    try:
+        while True:
+            data = await websocket.receive_json()
+            question = data.get("question", "")
+            
+            if not question:
+                await websocket.send_json({"type": "error", "content": "Question cannot be empty"})
+                continue
+            
+            if vector_store is None:
+                await websocket.send_json({"type": "error", "content": "Please upload a document first"})
+                continue
+            
+            try:
+                # Detect if question is a greeting (no document context needed)
+                greeting_words = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 
+                                 'good evening', 'how are you', 'whats up', "what's up", 'sup', 'howdy']
+                is_greeting = any(word in question.lower() for word in greeting_words) and len(question.strip()) < 30
+                
+                # Format chat history
+                history_text = "\n".join([
+                    f"Human: {msg['question']}\nAssistant: {msg['answer']}"
+                    for msg in chat_history[-MAX_HISTORY:]
+                ]) if chat_history else "No previous conversation."
+                
+                await websocket.send_json({"type": "start"})
+                full_response = ""
+                
+                if is_greeting:
+                    # Handle greeting without document retrieval - NO SOURCES
+                    prompt_text = f"""You are a helpful AI assistant for document Q&A.
+Respond to this greeting naturally and briefly. 
+
+Chat History:
+{history_text}
+
+User: {question}"""
+                    
+                    messages = [{"role": "user", "content": prompt_text}]
+                    async for chunk in llm.astream(messages):
+                        token = chunk.content
+                        full_response += token
+                        await websocket.send_json({"type": "token", "content": token})
+                    
+                    await websocket.send_json({"type": "end"})
+                    # NO sources for greetings
+                    
+                else:
+                    # Normal question - retrieve documents and send sources
+                    retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+                    relevant_docs = retriever.invoke(question)
+                    context = "\n\n".join(doc.page_content for doc in relevant_docs)
+                    
+                    template = f"""You are a helpful assistant answering questions about a document.
+
+Chat History:
+{history_text}
+
+Context from document:
+{context}
+
+Question: {question}
+
+Answer:"""
+                    
+                    messages = [{"role": "user", "content": template}]
+                    async for chunk in llm.astream(messages):
+                        token = chunk.content
+                        full_response += token
+                        await websocket.send_json({"type": "token", "content": token})
+                    
+                    await websocket.send_json({"type": "end"})
+                    
+                    # Send sources for document questions
+                    sources = [doc.page_content for doc in relevant_docs]
+                    await websocket.send_json({"type": "sources", "sources": sources})
+                
+                # Save to history
+                chat_history.append({"question": question, "answer": full_response})
+                if len(chat_history) > MAX_HISTORY:
+                    chat_history[:] = chat_history[-MAX_HISTORY:]
+                
+            except Exception as e:
+                await websocket.send_json({"type": "error", "content": f"Error: {str(e)}"})
+    
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
+    except Exception as e:
+        print(f"WebSocket error: {str(e)}")
 
 
 @app.get("/health")
